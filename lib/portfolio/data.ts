@@ -10,12 +10,15 @@ export interface Holding {
   avgCost: number;
 }
 
-/** The signed-in user's holdings and watchlist (RLS scopes both to them). */
-export async function loadHoldings() {
+/**
+ * A user's holdings and watchlist. Every query here filters by user id
+ * explicitly, because RLS lets admins read all users' rows.
+ */
+export async function loadHoldings(userId: string) {
   const supabase = await createClient();
   const [positions, watchlist] = await Promise.all([
-    supabase.from("positions").select("symbol, quantity, avg_cost").order("symbol"),
-    supabase.from("watchlist").select("symbol").order("created_at"),
+    supabase.from("positions").select("symbol, quantity, avg_cost").eq("user_id", userId).order("symbol"),
+    supabase.from("watchlist").select("symbol").eq("user_id", userId).order("created_at"),
   ]);
   const holdings: Holding[] = (positions.data ?? []).map((p) => ({
     symbol: p.symbol,
@@ -36,8 +39,12 @@ export async function loadPortfolioHistory(userId: string, range: Range): Promis
 
   const [profile, positions, orders, funding] = await Promise.all([
     supabase.from("profiles").select("cash_balance").eq("id", userId).single(),
-    supabase.from("positions").select("symbol, quantity"),
-    supabase.from("orders").select("symbol, side, quantity, notional, created_at").gt("created_at", since),
+    supabase.from("positions").select("symbol, quantity").eq("user_id", userId),
+    supabase
+      .from("orders")
+      .select("symbol, side, quantity, notional, created_at")
+      .eq("user_id", userId)
+      .gt("created_at", since),
     supabase.from("funding_events").select("amount, created_at").eq("user_id", userId).gt("created_at", since),
   ]);
 
