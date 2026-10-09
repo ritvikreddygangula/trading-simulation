@@ -13,7 +13,6 @@ import {
   type LineData,
   type MouseEventParams,
   type UTCTimestamp,
-  type WhitespaceData,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { Direction } from "@/lib/format";
@@ -37,19 +36,18 @@ function cssVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-/** Pads an in-progress 1D session to 4 PM so the line grows left to right like Robinhood's. */
-function withSessionPadding(points: PricePoint[], range: Range) {
-  const data: Array<LineData | WhitespaceData> = points.map((p) => ({
-    time: p.time as UTCTimestamp,
-    value: p.price,
-  }));
-  if (range !== "1D" || points.length === 0) return data;
+const toLine = (p: PricePoint): LineData => ({ time: p.time as UTCTimestamp, value: p.price });
 
-  const lastBar = points[0].time + (SESSION_MINUTES - 5) * 60;
-  for (let t = points[points.length - 1].time + FIVE_MIN; t <= lastBar; t += FIVE_MIN) {
-    data.push({ time: t as UTCTimestamp });
-  }
-  return data;
+const SESSION_BARS = SESSION_MINUTES / 5;
+
+/**
+ * 1D always spans the full session so an in-progress day grows left to right,
+ * like Robinhood. Other ranges fill the width.
+ */
+function fitRange(c: IChartApi | null, range: Range) {
+  if (!c) return;
+  if (range === "1D") c.timeScale().setVisibleLogicalRange({ from: 0, to: SESSION_BARS - 1 });
+  else c.timeScale().fitContent();
 }
 
 export function PriceChart({
@@ -84,7 +82,7 @@ export function PriceChart({
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
       rightPriceScale: { visible: false, scaleMargins: { top: 0.12, bottom: 0.12 } },
       leftPriceScale: { visible: false },
-      timeScale: { visible: false, fixLeftEdge: true, fixRightEdge: true, lockVisibleTimeRangeOnResize: true },
+      timeScale: { visible: false, fixLeftEdge: true, lockVisibleTimeRangeOnResize: true },
       crosshair: {
         mode: CrosshairMode.Magnet,
         horzLine: { visible: false, labelVisible: false },
@@ -128,7 +126,7 @@ export function PriceChart({
     if (!s) return;
     const color = cssVar(direction === "down" ? "--loss" : "--gain");
     s.applyOptions({ color, crosshairMarkerBackgroundColor: color });
-    s.setData(withSessionPadding(points, range));
+    s.setData(points.map(toLine));
 
     if (baseLine.current) s.removePriceLine(baseLine.current);
     baseLine.current =
@@ -141,7 +139,7 @@ export function PriceChart({
             axisLabelVisible: false,
           })
         : null;
-    chart.current?.timeScale().fitContent();
+    fitRange(chart.current, range);
   }, [points, range, baseline, direction]);
 
   // Live ticks extend today's line into the current 5-minute bucket.
@@ -153,6 +151,7 @@ export function PriceChart({
     const sessionEnd = points[0].time + (SESSION_MINUTES - 5) * 60;
     if (bucket < last || bucket > sessionEnd) return;
     s.update({ time: bucket as UTCTimestamp, value: livePrice });
+    fitRange(chart.current, range);
   }, [livePrice, liveOpen, range, points]);
 
   return (
