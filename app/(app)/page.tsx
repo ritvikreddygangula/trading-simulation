@@ -2,9 +2,11 @@ import { ChangeLabel } from "@/components/market/change-label";
 import { PriceDisplay } from "@/components/market/price-display";
 import { Columns } from "@/components/shell/columns";
 import { Panel } from "@/components/ui/panel";
+import { requireProfile } from "@/lib/auth";
 import { formatUsd } from "@/lib/format";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const profile = await requireProfile();
   return (
     <Columns
       main={
@@ -12,7 +14,7 @@ export default function HomePage() {
           <h1 id="portfolio-heading" className="text-sm text-muted">
             Portfolio value
           </h1>
-          <PriceDisplay value={0} size="lg" className="mt-2" />
+          <PriceDisplay value={profile.cash_balance} size="lg" className="mt-2" />
           <ChangeLabel change={0} changePct={0} period="Today" className="mt-3" />
 
           <div className="mt-8 flex h-64 flex-col justify-center border-b border-line">
@@ -26,7 +28,7 @@ export default function HomePage() {
 
           <div className="flex items-center justify-between border-b border-line py-5">
             <span className="text-base">Buying power</span>
-            <span className="text-base tabular-nums">{formatUsd(0)}</span>
+            <span className="text-base tabular-nums">{formatUsd(profile.cash_balance)}</span>
           </div>
         </section>
       }
