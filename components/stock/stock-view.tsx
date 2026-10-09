@@ -33,7 +33,7 @@ export function StockView({ asset }: { asset: Asset }) {
   const baseline = range === "1D" ? (quote?.prevClose ?? bars?.baseline) : bars?.baseline;
   const latest = quote?.price ?? bars?.points.at(-1)?.price;
   const shown = hovered?.price ?? latest;
-  const change = shown != null && baseline != null ? shown - baseline : 0;
+  const change = shown != null && baseline != null ? shown - baseline : 0; // only shown when both exist
   const rangeDirection = direction(latest != null && baseline != null ? latest - baseline : 0);
 
   return (
@@ -48,12 +48,16 @@ export function StockView({ asset }: { asset: Asset }) {
         ) : (
           <div aria-hidden className="mt-3 h-16 w-56 animate-pulse rounded-lg bg-surface" />
         )}
-        <ChangeLabel
-          change={change}
-          changePct={baseline ? change / baseline : 0}
-          period={hovered ? formatChartTime(hovered.time, range) : PERIOD[range]}
-          className="mt-3"
-        />
+        {shown != null && baseline != null ? (
+          <ChangeLabel
+            change={change}
+            changePct={change / baseline}
+            period={hovered ? formatChartTime(hovered.time, range) : PERIOD[range]}
+            className="mt-3"
+          />
+        ) : (
+          <div aria-hidden className="mt-4 h-4 w-40 animate-pulse rounded bg-surface" />
+        )}
         {quoteError && <p className="mt-2 text-sm text-loss">{quoteError.message}</p>}
       </header>
 
