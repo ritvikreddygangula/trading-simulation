@@ -78,3 +78,31 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Price tick: a changed digit rolls in from the direction of the move. */
+@keyframes tick-up {
+  from {
+    transform: translateY(60%);
+    opacity: 0;
+    color: var(--gain);
+  }
+  60% {
+    color: var(--gain);
+  }
+}
+
+@keyframes tick-down {
+  from {
+    transform: translateY(-60%);
+    opacity: 0;
+    color: var(--loss);
+  }
+  60% {
+    color: var(--loss);
+  }
+}
+
+@theme inline {
+  --animate-tick-up: tick-up 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-tick-down: tick-down 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
