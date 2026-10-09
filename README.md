@@ -35,7 +35,7 @@ npm test
    select id, email, split_part(email, '@', 1) from auth.users
    on conflict (id) do nothing;
    ```
-4. Sign up in the app, then make yourself admin in the SQL Editor:
+4. Sign up in the app, then make yourself admin in the SQL Editor (after that, fund every account from **Admin** in the account menu):
    ```sql
    update public.profiles set role = 'admin' where email = 'you@example.com';
    ```
