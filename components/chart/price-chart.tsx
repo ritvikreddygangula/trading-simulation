@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type AutoscaleInfo,
   ColorType,
   createChart,
   CrosshairMode,
@@ -98,7 +99,6 @@ export function PriceChart({
       lastValueVisible: false,
       crosshairMarkerRadius: 5,
       crosshairMarkerBorderWidth: 0,
-      lastPriceAnimation: LastPriceAnimationMode.OnDataUpdate,
     });
 
     const onMove = (param: MouseEventParams) => {
@@ -125,7 +125,28 @@ export function PriceChart({
     const s = series.current;
     if (!s) return;
     const color = cssVar(direction === "down" ? "--loss" : "--gain");
-    s.applyOptions({ color, crosshairMarkerBackgroundColor: color });
+    s.applyOptions({
+      color,
+      crosshairMarkerBackgroundColor: color,
+      // Pulse only on a live intraday chart.
+      lastPriceAnimation:
+        range === "1D" && liveOpen ? LastPriceAnimationMode.OnDataUpdate : LastPriceAnimationMode.Disabled,
+      // Keep the previous-close line in view even when price stays on one side of it.
+      autoscaleInfoProvider:
+        range === "1D"
+          ? (original: () => AutoscaleInfo | null) => {
+              const info = original();
+              if (!info?.priceRange) return info;
+              return {
+                ...info,
+                priceRange: {
+                  minValue: Math.min(info.priceRange.minValue, baseline),
+                  maxValue: Math.max(info.priceRange.maxValue, baseline),
+                },
+              };
+            }
+          : undefined,
+    });
     s.setData(points.map(toLine));
 
     if (baseLine.current) s.removePriceLine(baseLine.current);
@@ -140,7 +161,7 @@ export function PriceChart({
           })
         : null;
     fitRange(chart.current, range);
-  }, [points, range, baseline, direction]);
+  }, [points, range, baseline, direction, liveOpen]);
 
   // Live ticks extend today's line into the current 5-minute bucket.
   useEffect(() => {
