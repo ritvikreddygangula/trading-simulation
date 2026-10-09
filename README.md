@@ -23,6 +23,12 @@ Open http://localhost:3000.
 1. Create a project at supabase.com.
 2. Copy the Project URL, anon key, and service role key from **Project Settings → API** into `.env.local`.
 3. Open **SQL Editor**, paste `supabase/migrations/0001_init.sql`, and run it. Run each new file in `supabase/migrations/` in order as later branches add them.
+   If you signed up before running it, create the missing profile rows:
+   ```sql
+   insert into public.profiles (id, email, display_name)
+   select id, email, split_part(email, '@', 1) from auth.users
+   on conflict (id) do nothing;
+   ```
 4. Sign up in the app, then make yourself admin in the SQL Editor:
    ```sql
    update public.profiles set role = 'admin' where email = 'you@example.com';

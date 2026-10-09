@@ -101,6 +101,11 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Give a profile to anyone who signed up before this trigger existed.
+insert into public.profiles (id, email, display_name)
+select id, email, split_part(email, '@', 1) from auth.users
+on conflict (id) do nothing;
+
 -- Row Level Security --------------------------------------------------------
 
 alter table public.profiles enable row level security;
