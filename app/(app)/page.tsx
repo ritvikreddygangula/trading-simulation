@@ -1,67 +1,47 @@
 import { Suspense } from "react";
-import { ChangeLabel } from "@/components/market/change-label";
-import { PriceDisplay } from "@/components/market/price-display";
+import { PortfolioView } from "@/components/portfolio/portfolio-view";
+import { HoldingsList, WatchlistList } from "@/components/portfolio/stock-list";
 import { Columns } from "@/components/shell/columns";
-import { Panel } from "@/components/ui/panel";
 import { requireProfile } from "@/lib/auth";
-import { formatUsd } from "@/lib/format";
+import { loadHoldings } from "@/lib/portfolio/data";
 
 export default function HomePage() {
   return (
+    <Suspense fallback={<HomeSkeleton />}>
+      <Home />
+    </Suspense>
+  );
+}
+
+async function Home() {
+  const profile = await requireProfile();
+  const { holdings, watchlist } = await loadHoldings(profile.id);
+
+  return (
     <Columns
-      main={
-        <section aria-labelledby="portfolio-heading">
-          <h1 id="portfolio-heading" className="text-sm text-muted">
-            Portfolio value
-          </h1>
-          <Suspense fallback={<SummarySkeleton />}>
-            <PortfolioSummary />
-          </Suspense>
-        </section>
-      }
+      main={<PortfolioView cash={profile.cash_balance} holdings={holdings} />}
       rail={
-        <Panel className="p-5">
-          <h2 className="text-lg font-medium">Watchlist</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            Search for a stock and add it here to follow its price.
-          </p>
-        </Panel>
+        <div className="flex flex-col gap-4">
+          <HoldingsList holdings={holdings} />
+          <WatchlistList symbols={watchlist} />
+        </div>
       }
     />
   );
 }
 
-async function PortfolioSummary() {
-  const profile = await requireProfile();
+function HomeSkeleton() {
   return (
-    <>
-      <PriceDisplay value={profile.cash_balance} size="lg" className="mt-2" />
-      <ChangeLabel change={0} changePct={0} period="Today" className="mt-3" />
-
-      <div className="mt-8 flex h-64 flex-col justify-center border-b border-line">
-        <svg viewBox="0 0 600 2" preserveAspectRatio="none" className="h-px w-full" aria-hidden>
-          <line x1="0" y1="1" x2="600" y2="1" stroke="var(--faint)" strokeDasharray="4 6" />
-        </svg>
-        <p className="mt-4 text-sm text-muted">
-          Your portfolio chart starts with your first trade.
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between border-b border-line py-5">
-        <span className="text-base">Buying power</span>
-        <span className="text-base tabular-nums">{formatUsd(profile.cash_balance)}</span>
-      </div>
-    </>
-  );
-}
-
-function SummarySkeleton() {
-  return (
-    <div aria-hidden className="animate-pulse">
-      <div className="mt-3 h-16 w-56 rounded-lg bg-surface" />
-      <div className="mt-4 h-4 w-40 rounded bg-surface" />
-      <div className="mt-8 h-64 border-b border-line" />
-      <div className="h-16 border-b border-line" />
-    </div>
+    <Columns
+      main={
+        <div aria-hidden className="animate-pulse">
+          <div className="h-4 w-28 rounded bg-surface" />
+          <div className="mt-3 h-16 w-56 rounded-lg bg-surface" />
+          <div className="mt-4 h-4 w-40 rounded bg-surface" />
+          <div className="mt-6 h-72 sm:h-80" />
+        </div>
+      }
+      rail={<div aria-hidden className="h-48 animate-pulse rounded-2xl bg-surface" />}
+    />
   );
 }
