@@ -81,6 +81,14 @@ export async function getQuotes(symbols: string[]): Promise<Record<string, Quote
   });
 }
 
+/** Skips the shared cache. Used to price orders. */
+export async function getFreshQuote(symbol: string) {
+  const raw = await dataApi<Record<string, RawSnapshot>>("/v2/stocks/snapshots", { symbols: symbol });
+  const quote = raw[symbol] && toQuote(symbol, raw[symbol]);
+  if (!quote) throw new MarketDataError(`No price data for ${symbol}.`, 404);
+  return quote;
+}
+
 export async function getQuote(symbol: string) {
   const quote = (await getQuotes([symbol]))[symbol];
   if (!quote) throw new MarketDataError(`No price data for ${symbol}.`, 404);
