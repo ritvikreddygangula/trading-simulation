@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+import { requireProfile } from "@/lib/auth";
+import { AccountMenu } from "./account-menu";
 import { Logo } from "./logo";
 import { NavLinks } from "./nav-links";
 import { SearchBox } from "./search-box";
@@ -10,8 +13,11 @@ export function TopNav() {
         <div className="hidden flex-1 sm:block">
           <SearchBox />
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <NavLinks />
+          <Suspense fallback={<div className="size-9 rounded-full border border-line" />}>
+            <Account />
+          </Suspense>
         </div>
       </div>
       <div className="px-4 pb-3 sm:hidden">
@@ -19,4 +25,9 @@ export function TopNav() {
       </div>
     </header>
   );
+}
+
+async function Account() {
+  const profile = await requireProfile();
+  return <AccountMenu profile={profile} />;
 }

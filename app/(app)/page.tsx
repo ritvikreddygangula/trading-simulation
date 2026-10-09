@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { ChangeLabel } from "@/components/market/change-label";
 import { PriceDisplay } from "@/components/market/price-display";
 import { Columns } from "@/components/shell/columns";
 import { Panel } from "@/components/ui/panel";
+import { requireProfile } from "@/lib/auth";
 import { formatUsd } from "@/lib/format";
 
 export default function HomePage() {
@@ -12,22 +14,9 @@ export default function HomePage() {
           <h1 id="portfolio-heading" className="text-sm text-muted">
             Portfolio value
           </h1>
-          <PriceDisplay value={0} size="lg" className="mt-2" />
-          <ChangeLabel change={0} changePct={0} period="Today" className="mt-3" />
-
-          <div className="mt-8 flex h-64 flex-col justify-center border-b border-line">
-            <svg viewBox="0 0 600 2" preserveAspectRatio="none" className="h-px w-full" aria-hidden>
-              <line x1="0" y1="1" x2="600" y2="1" stroke="var(--faint)" strokeDasharray="4 6" />
-            </svg>
-            <p className="mt-4 text-sm text-muted">
-              Your portfolio chart starts with your first trade.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between border-b border-line py-5">
-            <span className="text-base">Buying power</span>
-            <span className="text-base tabular-nums">{formatUsd(0)}</span>
-          </div>
+          <Suspense fallback={<SummarySkeleton />}>
+            <PortfolioSummary />
+          </Suspense>
         </section>
       }
       rail={
@@ -39,5 +28,40 @@ export default function HomePage() {
         </Panel>
       }
     />
+  );
+}
+
+async function PortfolioSummary() {
+  const profile = await requireProfile();
+  return (
+    <>
+      <PriceDisplay value={profile.cash_balance} size="lg" className="mt-2" />
+      <ChangeLabel change={0} changePct={0} period="Today" className="mt-3" />
+
+      <div className="mt-8 flex h-64 flex-col justify-center border-b border-line">
+        <svg viewBox="0 0 600 2" preserveAspectRatio="none" className="h-px w-full" aria-hidden>
+          <line x1="0" y1="1" x2="600" y2="1" stroke="var(--faint)" strokeDasharray="4 6" />
+        </svg>
+        <p className="mt-4 text-sm text-muted">
+          Your portfolio chart starts with your first trade.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between border-b border-line py-5">
+        <span className="text-base">Buying power</span>
+        <span className="text-base tabular-nums">{formatUsd(profile.cash_balance)}</span>
+      </div>
+    </>
+  );
+}
+
+function SummarySkeleton() {
+  return (
+    <div aria-hidden className="animate-pulse">
+      <div className="mt-3 h-16 w-56 rounded-lg bg-surface" />
+      <div className="mt-4 h-4 w-40 rounded bg-surface" />
+      <div className="mt-8 h-64 border-b border-line" />
+      <div className="h-16 border-b border-line" />
+    </div>
   );
 }
