@@ -5,9 +5,13 @@ import { Suspense } from "react";
 import { Columns } from "@/components/shell/columns";
 import { StockView } from "@/components/stock/stock-view";
 import { WatchToggle } from "@/components/stock/watch-toggle";
+import { OrderPanel } from "@/components/trade/order-panel";
+import { PositionSummary } from "@/components/trade/position-summary";
 import { Panel } from "@/components/ui/panel";
+import { requireProfile } from "@/lib/auth";
 import { MarketDataError } from "@/lib/market/alpaca";
 import { getAsset, normalizeSymbol } from "@/lib/market/service";
+import { getPosition } from "@/lib/trading/position";
 import { isWatched } from "@/lib/watchlist-read";
 
 export async function generateMetadata({ params }: PageProps<"/stocks/[symbol]">): Promise<Metadata> {
@@ -36,21 +40,34 @@ async function Stock({ params }: Pick<PageProps<"/stocks/[symbol]">, "params">) 
     if (err instanceof MarketDataError && (err.status === 400 || err.status === 404)) notFound();
     throw err;
   }
-  const watched = await isWatched(symbol);
+  const [watched, position, profile] = await Promise.all([
+    isWatched(symbol),
+    getPosition(symbol),
+    requireProfile(),
+  ]);
 
   return (
     <Columns
-      main={<StockView asset={asset} />}
+      main={
+        <StockView asset={asset}>
+          {position && (
+            <PositionSummary symbol={symbol} quantity={position.quantity} avgCost={position.avgCost} />
+          )}
+        </StockView>
+      }
       rail={
-        <Panel className="p-5">
-          <h2 className="text-lg font-medium">{asset.symbol}</h2>
-          <p className="mt-1 text-sm text-muted">
-            {asset.fractionable ? "Fractional shares available" : "Whole shares only"}
-          </p>
-          <div className="mt-5">
-            <WatchToggle key={asset.symbol} symbol={asset.symbol} initial={watched} />
-          </div>
-        </Panel>
+        <div className="flex flex-col gap-4">
+          <Panel>
+            <OrderPanel
+              key={symbol}
+              symbol={symbol}
+              fractionable={asset.fractionable}
+              cash={profile.cash_balance}
+              held={position?.quantity ?? 0}
+            />
+          </Panel>
+          <WatchToggle key={asset.symbol} symbol={asset.symbol} initial={watched} />
+        </div>
       }
     />
   );
