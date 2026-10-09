@@ -18,6 +18,12 @@ npm run dev
 
 Open http://localhost:3000.
 
+## Tests
+
+```bash
+npm test
+```
+
 ## Supabase setup
 
 1. Create a project at supabase.com.
@@ -33,3 +39,7 @@ Open http://localhost:3000.
    ```sql
    update public.profiles set role = 'admin' where email = 'you@example.com';
    ```
+
+## How trades work
+
+The browser only sends what you want (`buy $50 of AAPL`). The server fetches a fresh price from Alpaca, works out the shares with `lib/trading/order.ts`, and settles the order through the `execute_trade` SQL function in one locked transaction. That function can only be called with the service role key, so cash and holdings can't be edited from the browser.

@@ -20,7 +20,7 @@ const PERIOD: Record<Range, string> = {
   "5Y": "Past 5 years",
 };
 
-export function StockView({ asset }: { asset: Asset }) {
+export function StockView({ asset, children }: { asset: Asset; children?: React.ReactNode }) {
   const [range, setRange] = useState<Range>("1D");
   const [hovered, setHovered] = useState<PricePoint | null>(null);
   const onHover = useCallback((p: PricePoint | null) => setHovered(p), []);
@@ -87,6 +87,8 @@ export function StockView({ asset }: { asset: Asset }) {
       <div className="mt-3">
         <MarketStatus />
       </div>
+
+      {children}
 
       <KeyStats quote={quote} asset={asset} />
     </article>
