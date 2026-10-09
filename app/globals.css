@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/*
+ * Ledger palette: ink-blue ground, brass as the one signature accent.
+ * Gain/loss colors are reserved for price movement only.
+ */
+:root {
+  --ink: #0f1724;
+  --surface: #162132;
+  --surface-raised: #1c2a3e;
+  --line: #243247;
+  --text: #e8edf5;
+  --muted: #8a97ab;
+  --faint: #5b6a80;
+  --brass: #e3b75b;
+  --brass-hover: #ecc674;
+  --brass-ink: #2a1f08;
+  --gain: #3dd68c;
+  --loss: #ff6b5e;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-brass: var(--brass);
+  --color-brass-hover: var(--brass-hover);
+  --color-brass-ink: var(--brass-ink);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-instrument-serif);
+
+  /* Type scale (ratio ~1.25) */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-price: 3.5rem;
+  --text-price--line-height: 1;
+  --text-price-lg: 4.5rem;
+  --text-price-lg--line-height: 1;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--brass) 35%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Price tick: a changed digit rolls in from the direction of the move. */
+@keyframes tick-up {
+  from {
+    transform: translateY(60%);
+    opacity: 0;
+    color: var(--gain);
+  }
+  60% {
+    color: var(--gain);
+  }
+}
+
+@keyframes tick-down {
+  from {
+    transform: translateY(-60%);
+    opacity: 0;
+    color: var(--loss);
+  }
+  60% {
+    color: var(--loss);
+  }
+}
+
+@theme inline {
+  --animate-tick-up: tick-up 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-tick-down: tick-down 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
