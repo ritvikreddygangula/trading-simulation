@@ -37,6 +37,23 @@ export function normalizeSymbol(input: string | null | undefined) {
   return symbol;
 }
 
+const nyClock = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  hour: "numeric",
+  minute: "numeric",
+  hourCycle: "h23",
+});
+
+/** Minutes since midnight in New York. */
+function nyMinutes(iso: string) {
+  const parts = nyClock.formatToParts(new Date(iso));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute");
+}
+
+const SESSION_OPEN = 9 * 60 + 30;
+const SESSION_CLOSE = 16 * 60;
+
 /** Calendar date (YYYY-MM-DD) in New York, where US sessions are defined. */
 function nyDate(iso: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(iso));
@@ -149,8 +166,14 @@ export async function getBars(symbol: string, range: Range): Promise<Bars> {
       ]);
       if (intraday.length === 0) throw new MarketDataError(`No recent trades for ${symbol}.`, 404);
 
-      const session = nyDate(intraday[intraday.length - 1].t);
-      const points = intraday.filter((b) => nyDate(b.t) === session).map(toPoint);
+      // Regular hours only: IEX also reports a few pre- and after-hours prints.
+      const regular = intraday.filter((b) => {
+        const m = nyMinutes(b.t);
+        return m >= SESSION_OPEN && m < SESSION_CLOSE;
+      });
+      if (regular.length === 0) throw new MarketDataError(`No recent trades for ${symbol}.`, 404);
+      const session = nyDate(regular[regular.length - 1].t);
+      const points = regular.filter((b) => nyDate(b.t) === session).map(toPoint);
       const prior = daily.filter((b) => nyDate(b.t) < session).at(-1);
       return { symbol, range, points, baseline: prior?.c ?? points[0].price };
     }

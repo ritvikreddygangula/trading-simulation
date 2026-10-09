@@ -75,3 +75,11 @@ export function useTickerSearch(query: string, delayMs = 150) {
     { keepPreviousData: true, revalidateOnFocus: false },
   );
 }
+
+export function usePortfolioHistory(range: Range) {
+  const interval = useLiveInterval();
+  return useSWR<Bars>(`/api/portfolio/history?range=${range}`, fetcher, {
+    refreshInterval: range === "1D" ? interval * 5 : 0,
+    keepPreviousData: true,
+  });
+}
