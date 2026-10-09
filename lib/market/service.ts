@@ -14,6 +14,23 @@ import type { Asset, Bars, MarketClock, PricePoint, Quote, Range } from "./types
 const SYMBOL_RE = /^[A-Z][A-Z.]{0,9}$/;
 const LISTED_EXCHANGES = new Set(["NYSE", "NASDAQ", "ARCA", "AMEX", "BATS"]);
 
+// Alpaca's asset list has no volume or market cap, so well-known names get a
+// ranking boost to keep "NV" → NVDA instead of an obscure three-letter ticker.
+const POPULAR = new Set(
+  (
+    "AAPL MSFT NVDA AMZN GOOGL GOOG META TSLA AVGO BRK.B JPM V MA UNH XOM LLY JNJ WMT PG HD " +
+    "COST NFLX AMD INTC ORCL CRM ADBE PEP KO DIS BAC WFC CSCO QCOM TXN IBM PYPL UBER ABNB " +
+    "SHOP SQ PLTR COIN SNOW HOOD RIVN LCID F GM NKE SBUX MCD BA CAT GE SPY QQQ VOO VTI IWM DIA ARKK"
+  ).split(" "),
+);
+
+/** "Apple Inc. Common Stock" → "Apple Inc." */
+function cleanName(name: string) {
+  return name
+    .replace(/\s+(Class [A-Z] )?(Common Stock|Capital Stock|Ordinary Shares|American Depositary Shares).*$/i, "")
+    .trim();
+}
+
 export function normalizeSymbol(input: string | null | undefined) {
   const symbol = (input ?? "").trim().toUpperCase();
   if (!SYMBOL_RE.test(symbol)) throw new MarketDataError(`"${input}" isn't a valid ticker.`, 400);
@@ -150,7 +167,7 @@ async function getAssetIndex() {
       if (!a.tradable || !LISTED_EXCHANGES.has(a.exchange)) continue;
       index.set(a.symbol, {
         symbol: a.symbol,
-        name: a.name,
+        name: cleanName(a.name),
         exchange: a.exchange,
         tradable: a.tradable,
         fractionable: a.fractionable,
@@ -181,7 +198,7 @@ export async function searchAssets(query: string, limit = 8): Promise<Asset[]> {
     else if (name.startsWith(q)) score = 50;
     else if (name.includes(` ${q}`)) score = 30;
     else if (q.length >= 3 && name.includes(q)) score = 10;
-    if (score) scored.push({ asset, score });
+    if (score) scored.push({ asset, score: score + (POPULAR.has(asset.symbol) ? 15 : 0) });
   }
 
   return scored
