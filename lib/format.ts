@@ -42,3 +42,34 @@ export function direction(change: number): Direction {
   if (change < 0) return "down";
   return "flat";
 }
+
+const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 });
+
+/** 2132399 → "2.13M" */
+export function formatCompact(value: number) {
+  return compact.format(value);
+}
+
+const NY = "America/New_York";
+const timeFmt = new Intl.DateTimeFormat("en-US", { timeZone: NY, hour: "numeric", minute: "2-digit" });
+const dateTimeFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: NY,
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+const dateFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: NY,
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+/** Label for a hovered chart point, at the precision its range needs. */
+export function formatChartTime(unixSeconds: number, range: string) {
+  const d = new Date(unixSeconds * 1000);
+  if (range === "1D") return `${timeFmt.format(d)} ET`;
+  if (range === "1W" || range === "1M") return `${dateTimeFmt.format(d)} ET`;
+  return dateFmt.format(d);
+}
