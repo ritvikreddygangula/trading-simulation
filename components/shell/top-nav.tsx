@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { requireProfile } from "@/lib/auth";
 import { AccountMenu } from "./account-menu";
 import { Logo } from "./logo";
-import { NavLinks } from "./nav-links";
+import { Links, NavLinks } from "./nav-links";
 import { SearchBox } from "./search-box";
 
 export function TopNav() {
@@ -14,7 +14,9 @@ export function TopNav() {
           <SearchBox />
         </div>
         <div className="ml-auto flex items-center gap-2 sm:gap-4">
-          <NavLinks />
+          <Suspense fallback={<Links pathname={null} />}>
+            <NavLinks />
+          </Suspense>
           <Suspense fallback={<div className="size-9 rounded-full border border-line" />}>
             <Account />
           </Suspense>

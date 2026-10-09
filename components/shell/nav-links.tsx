@@ -11,6 +11,11 @@ const links = [
 
 export function NavLinks() {
   const pathname = usePathname();
+  return <Links pathname={pathname} />;
+}
+
+/** Rendered without an active link while the URL streams in. */
+export function Links({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="Main" className="flex items-center gap-1">
       {links.map((link) => {
