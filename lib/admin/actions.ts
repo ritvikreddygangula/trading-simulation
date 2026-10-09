@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { formatUsd } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "./data";
 
@@ -46,5 +47,5 @@ export async function addFunds(_: AddFundsState, formData: FormData): Promise<Ad
 
   revalidatePath("/admin");
   revalidatePath("/", "layout");
-  return { ok: true, message: `Added. New balance ${Number(data.cash_balance).toLocaleString("en-US", { style: "currency", currency: "USD" })}.` };
+  return { ok: true, message: `Added ${formatUsd(amount)}. New balance ${formatUsd(Number(data.cash_balance))}.` };
 }
