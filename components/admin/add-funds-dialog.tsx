@@ -29,7 +29,7 @@ export function AddFundsDialog({ userId, userName, cash }: { userId: string; use
       <dialog
         ref={dialog}
         aria-labelledby={`${userId}-title`}
-        className="m-auto w-[min(92vw,420px)] rounded-2xl border border-line bg-surface p-0 text-text shadow-2xl shadow-black/50 backdrop:bg-ink/70 backdrop:backdrop-blur-sm"
+        className="m-auto w-[min(92vw,420px)] rounded-2xl text-left border border-line bg-surface p-0 text-text shadow-2xl shadow-black/50 backdrop:bg-ink/70 backdrop:backdrop-blur-sm"
         onClick={(e) => {
           if (e.target === dialog.current) dialog.current?.close();
         }}
