@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Columns } from "@/components/shell/columns";
+import { MarketPrefill } from "@/components/market/market-prefill";
 import { StockView } from "@/components/stock/stock-view";
 import { WatchToggle } from "@/components/stock/watch-toggle";
 import { OrderPanel } from "@/components/trade/order-panel";
@@ -10,7 +11,8 @@ import { PositionSummary } from "@/components/trade/position-summary";
 import { Panel } from "@/components/ui/panel";
 import { requireProfile } from "@/lib/auth";
 import { MarketDataError } from "@/lib/market/alpaca";
-import { getAsset, normalizeSymbol } from "@/lib/market/service";
+import { barsKey, quotesKey } from "@/lib/market/keys";
+import { getAsset, getBars, getQuotes, normalizeSymbol } from "@/lib/market/service";
 import { getPosition } from "@/lib/trading/position";
 import { isWatched } from "@/lib/watchlist-read";
 
@@ -40,36 +42,45 @@ async function Stock({ params }: Pick<PageProps<"/stocks/[symbol]">, "params">) 
     if (err instanceof MarketDataError && (err.status === 400 || err.status === 404)) notFound();
     throw err;
   }
-  const [watched, position, profile] = await Promise.all([
+  const [watched, position, profile, quotes, bars] = await Promise.all([
     isWatched(symbol),
     getPosition(symbol),
     requireProfile(),
+    // Pre-fetched so the price and chart arrive with the page; failures just fall back to client loading.
+    getQuotes([symbol]).catch(() => null),
+    getBars(symbol, "1D").catch(() => null),
   ]);
 
+  const prefill: Record<string, unknown> = {};
+  if (quotes) prefill[quotesKey([symbol])] = quotes;
+  if (bars) prefill[barsKey(symbol, "1D")] = bars;
+
   return (
-    <Columns
-      main={
-        <StockView asset={asset}>
-          {position && (
-            <PositionSummary symbol={symbol} quantity={position.quantity} avgCost={position.avgCost} />
-          )}
-        </StockView>
-      }
-      rail={
-        <div className="flex flex-col gap-4">
-          <Panel>
-            <OrderPanel
-              key={symbol}
-              symbol={symbol}
-              fractionable={asset.fractionable}
-              cash={profile.cash_balance}
-              held={position?.quantity ?? 0}
-            />
-          </Panel>
-          <WatchToggle key={asset.symbol} symbol={asset.symbol} initial={watched} />
-        </div>
-      }
-    />
+    <MarketPrefill data={prefill}>
+      <Columns
+        main={
+          <StockView asset={asset}>
+            {position && (
+              <PositionSummary symbol={symbol} quantity={position.quantity} avgCost={position.avgCost} />
+            )}
+          </StockView>
+        }
+        rail={
+          <div className="flex flex-col gap-4">
+            <Panel>
+              <OrderPanel
+                key={symbol}
+                symbol={symbol}
+                fractionable={asset.fractionable}
+                cash={profile.cash_balance}
+                held={position?.quantity ?? 0}
+              />
+            </Panel>
+            <WatchToggle key={asset.symbol} symbol={asset.symbol} initial={watched} />
+          </div>
+        }
+      />
+    </MarketPrefill>
   );
 }
 
