@@ -6,6 +6,7 @@ import { Columns } from "@/components/shell/columns";
 import { MarketPrefill } from "@/components/market/market-prefill";
 import { StockView } from "@/components/stock/stock-view";
 import { WatchToggle } from "@/components/stock/watch-toggle";
+import { MobileTradeBar } from "@/components/trade/mobile-trade-bar";
 import { OrderPanel } from "@/components/trade/order-panel";
 import { PositionSummary } from "@/components/trade/position-summary";
 import { Panel } from "@/components/ui/panel";
@@ -67,7 +68,7 @@ async function Stock({ params }: Pick<PageProps<"/stocks/[symbol]">, "params">) 
         }
         rail={
           <div className="flex flex-col gap-4">
-            <Panel>
+            <Panel id="trade" className="scroll-mt-24">
               <OrderPanel
                 key={symbol}
                 symbol={symbol}
@@ -80,6 +81,9 @@ async function Stock({ params }: Pick<PageProps<"/stocks/[symbol]">, "params">) 
           </div>
         }
       />
+      <MobileTradeBar symbol={symbol} targetId="trade" />
+      {/* Room for the mobile trade bar so it never covers the last section. */}
+      <div aria-hidden className="h-20 lg:hidden" />
     </MarketPrefill>
   );
 }
