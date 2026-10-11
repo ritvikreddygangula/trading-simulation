@@ -24,9 +24,9 @@ export function KeyStats({ quote, asset }: { quote?: Quote; asset: Asset }) {
           </div>
         ))}
       </dl>
-      <p className="mt-6 text-xs text-faint">
+      <p className="mt-6 text-xs text-muted">
         Prices from the IEX exchange feed via Alpaca. Volume reflects IEX trades only. Charts by{" "}
-        <a href="https://www.tradingview.com/" className="underline hover:text-muted">
+        <a href="https://www.tradingview.com/" className="underline hover:text-text">
           TradingView
         </a>
         .
