@@ -19,7 +19,7 @@ export function Input({ label, error, id, className, ...props }: InputProps) {
         id={inputId}
         aria-invalid={error ? true : undefined}
         className={cn(
-          "h-11 rounded-lg border border-line bg-surface px-3 text-text placeholder:text-faint",
+          "h-11 rounded-lg border border-line bg-surface px-3 text-text placeholder:text-muted",
           "transition-colors focus:border-brass focus:outline-none",
           error && "border-loss",
           className,

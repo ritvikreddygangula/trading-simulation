@@ -30,6 +30,11 @@ export interface Bars {
   baseline: number;
 }
 
+/** Portfolio value over a range, plus deposits so returns can exclude them. */
+export interface PortfolioBars extends Bars {
+  deposits: Array<{ time: number; amount: number }>;
+}
+
 export interface Asset {
   symbol: string;
   name: string;

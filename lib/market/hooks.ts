@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import type { Asset, Bars, MarketClock, Quote, Range } from "./types";
+import { barsKey, portfolioHistoryKey, quotesKey } from "./keys";
+import type { Asset, Bars, MarketClock, PortfolioBars, Quote, Range } from "./types";
 
 export class FetchError extends Error {
   constructor(
@@ -35,7 +36,7 @@ function useLiveInterval() {
 
 export function useQuotes(symbols: string[]) {
   const interval = useLiveInterval();
-  const key = symbols.length ? `/api/market/quotes?symbols=${[...symbols].sort().join(",")}` : null;
+  const key = symbols.length ? quotesKey(symbols) : null;
   return useSWR<Record<string, Quote>>(key, fetcher, {
     refreshInterval: interval,
     keepPreviousData: true,
@@ -49,7 +50,7 @@ export function useQuote(symbol: string) {
 
 export function useBars(symbol: string, range: Range) {
   const interval = useLiveInterval();
-  return useSWR<Bars>(`/api/market/bars?symbol=${symbol}&range=${range}`, fetcher, {
+  return useSWR<Bars>(barsKey(symbol, range), fetcher, {
     // Only the intraday chart moves fast enough to be worth re-polling.
     refreshInterval: range === "1D" ? interval * 5 : 0,
     keepPreviousData: true,
@@ -78,7 +79,7 @@ export function useTickerSearch(query: string, delayMs = 150) {
 
 export function usePortfolioHistory(range: Range) {
   const interval = useLiveInterval();
-  return useSWR<Bars>(`/api/portfolio/history?range=${range}`, fetcher, {
+  return useSWR<PortfolioBars>(portfolioHistoryKey(range), fetcher, {
     refreshInterval: range === "1D" ? interval * 5 : 0,
     keepPreviousData: true,
   });

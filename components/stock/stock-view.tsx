@@ -64,6 +64,7 @@ export function StockView({ asset, children }: { asset: Asset; children?: React.
       <div className="mt-6">
         {bars && baseline != null ? (
           <PriceChart
+            label={`${asset.symbol} price, ${PERIOD[range].toLowerCase()}`}
             points={bars.points}
             range={range}
             baseline={baseline}

@@ -26,7 +26,6 @@ export function PriceDisplay({ value, size = "md", className }: PriceDisplayProp
 
   return (
     <p
-      aria-live="polite"
       className={cn(
         "font-display tracking-tight",
         size === "lg" ? "text-price-lg" : "text-price",
