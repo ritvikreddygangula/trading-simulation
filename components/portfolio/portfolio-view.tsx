@@ -74,6 +74,7 @@ export function PortfolioView({ cash, holdings }: { cash: number; holdings: Hold
           </div>
         ) : history && baseline != null ? (
           <PriceChart
+            label={`Portfolio value, ${PERIOD[range].toLowerCase()}`}
             points={history.points}
             range={range}
             baseline={baseline}

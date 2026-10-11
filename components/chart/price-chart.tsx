@@ -23,6 +23,8 @@ const SESSION_MINUTES = 390; // 9:30 to 16:00 ET
 const FIVE_MIN = 300;
 
 interface PriceChartProps {
+  /** Accessible name, e.g. "AAPL price, past week". */
+  label: string;
   points: PricePoint[];
   range: Range;
   baseline: number;
@@ -52,6 +54,7 @@ function fitRange(c: IChartApi | null, range: Range) {
 }
 
 export function PriceChart({
+  label,
   points,
   range,
   baseline,
@@ -181,7 +184,7 @@ export function PriceChart({
       className="h-72 w-full sm:h-80"
       onMouseLeave={() => hover.current(null)}
       role="img"
-      aria-label="Price chart"
+      aria-label={label}
     />
   );
 }

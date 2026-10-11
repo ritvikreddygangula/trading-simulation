@@ -77,7 +77,7 @@ export function SearchBox() {
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        className="h-10 w-full rounded-full border border-line bg-surface pl-9 pr-4 text-sm text-text placeholder:text-faint transition-colors focus:border-brass focus:outline-none"
+        className="h-10 w-full rounded-full border border-line bg-surface pl-9 pr-4 text-base text-text sm:text-sm placeholder:text-muted transition-colors focus:border-brass focus:outline-none"
       />
 
       {showList && (

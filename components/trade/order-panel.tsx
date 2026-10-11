@@ -107,13 +107,12 @@ export function OrderPanel({ symbol, fractionable, cash, held }: OrderPanelProps
 
   return (
     <div>
-      <div role="tablist" aria-label="Order side" className="flex border-b border-line">
+      <div role="group" aria-label="Order side" className="flex border-b border-line">
         {(["buy", "sell"] as const).map((s) => (
           <button
             key={s}
             type="button"
-            role="tab"
-            aria-selected={side === s}
+            aria-pressed={side === s}
             disabled={s === "sell" && held <= 0}
             onClick={() => reset(s)}
             className={cn(
@@ -194,7 +193,7 @@ export function OrderPanel({ symbol, fractionable, cash, held }: OrderPanelProps
               {mode === "dollars" ? "Amount" : "Shares"}
             </label>
             <div className="flex items-baseline font-display text-2xl">
-              {mode === "dollars" && <span className={text ? "text-text" : "text-faint"}>$</span>}
+              {mode === "dollars" && <span className={text ? "text-text" : "text-muted"}>$</span>}
               <input
                 id={inputId}
                 inputMode="decimal"
@@ -205,7 +204,7 @@ export function OrderPanel({ symbol, fractionable, cash, held }: OrderPanelProps
                   setText(sanitize(e.target.value, mode === "dollars" ? 2 : fractionable ? 8 : 0));
                   setError(null);
                 }}
-                className="w-36 bg-transparent text-right tabular-nums placeholder:text-faint focus:outline-none"
+                className="w-36 bg-transparent text-right tabular-nums placeholder:text-muted focus:outline-none"
               />
             </div>
           </div>
