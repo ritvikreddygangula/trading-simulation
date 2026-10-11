@@ -4,9 +4,9 @@ import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { HoldingsList, WatchlistList } from "@/components/portfolio/stock-list";
 import { Columns } from "@/components/shell/columns";
 import { requireProfile } from "@/lib/auth";
-import { quotesKey } from "@/lib/market/keys";
+import { portfolioHistoryKey, quotesKey } from "@/lib/market/keys";
 import { getQuotes } from "@/lib/market/service";
-import { loadHoldings } from "@/lib/portfolio/data";
+import { loadHoldings, loadPortfolioHistory } from "@/lib/portfolio/data";
 
 export default function HomePage() {
   return (
@@ -20,17 +20,22 @@ async function Home() {
   const profile = await requireProfile();
   const { holdings, watchlist } = await loadHoldings(profile.id);
 
-  // Pre-fetch prices so the live total and lists render with the page.
+  // Pre-fetch prices and today's chart so the page renders complete.
   const held = holdings.map((h) => h.symbol);
   const prefill: Record<string, unknown> = {};
-  await Promise.all(
-    [held, watchlist]
+  await Promise.all([
+    ...[held, watchlist]
       .filter((symbols) => symbols.length > 0)
       .map(async (symbols) => {
         const quotes = await getQuotes(symbols).catch(() => null);
         if (quotes) prefill[quotesKey(symbols)] = quotes;
       }),
-  );
+    loadPortfolioHistory(profile.id, "1D")
+      .then((history) => {
+        prefill[portfolioHistoryKey("1D")] = history;
+      })
+      .catch(() => {}),
+  ]);
 
   return (
     <MarketPrefill data={prefill}>
