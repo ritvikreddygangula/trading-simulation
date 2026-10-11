@@ -10,6 +10,7 @@ import { direction, formatChartTime, formatUsd } from "@/lib/format";
 import { useMarketClock, usePortfolioHistory, useQuotes } from "@/lib/market/hooks";
 import type { PricePoint, Range } from "@/lib/market/types";
 import type { Holding } from "@/lib/portfolio/data";
+import { rangeReturn } from "@/lib/portfolio/returns";
 
 const PERIOD: Record<Range, string> = {
   "1D": "Today",
@@ -37,8 +38,16 @@ export function PortfolioView({ cash, holdings }: { cash: number; holdings: Hold
 
   const baseline = history?.baseline;
   const shown = hovered?.price ?? live;
-  const change = shown != null && baseline != null ? shown - baseline : null;
-  const rangeDirection = direction(live != null && baseline != null ? live - baseline : 0);
+
+  // Deposits made during the range raise the value but aren't counted as returns.
+  const deposits = history?.deposits ?? [];
+  const shownReturn =
+    shown != null && baseline != null
+      ? rangeReturn({ value: shown, baseline, deposits, at: hovered?.time })
+      : null;
+  const liveChange =
+    live != null && baseline != null ? rangeReturn({ value: live, baseline, deposits }).change : 0;
+  const rangeDirection = direction(liveChange);
   const isEmpty = cash === 0 && holdings.length === 0;
 
   return (
@@ -51,10 +60,10 @@ export function PortfolioView({ cash, holdings }: { cash: number; holdings: Hold
       ) : (
         <div aria-hidden className="mt-3 h-16 w-56 animate-pulse rounded-lg bg-surface" />
       )}
-      {change != null && baseline ? (
+      {shownReturn ? (
         <ChangeLabel
-          change={change}
-          changePct={change / baseline}
+          change={shownReturn.change}
+          changePct={shownReturn.pct}
           period={hovered ? formatChartTime(hovered.time, range) : PERIOD[range]}
           className="mt-3"
         />

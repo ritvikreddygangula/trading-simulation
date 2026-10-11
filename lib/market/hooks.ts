@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { barsKey, quotesKey } from "./keys";
-import type { Asset, Bars, MarketClock, Quote, Range } from "./types";
+import { barsKey, portfolioHistoryKey, quotesKey } from "./keys";
+import type { Asset, Bars, MarketClock, PortfolioBars, Quote, Range } from "./types";
 
 export class FetchError extends Error {
   constructor(
@@ -79,7 +79,7 @@ export function useTickerSearch(query: string, delayMs = 150) {
 
 export function usePortfolioHistory(range: Range) {
   const interval = useLiveInterval();
-  return useSWR<Bars>(`/api/portfolio/history?range=${range}`, fetcher, {
+  return useSWR<PortfolioBars>(portfolioHistoryKey(range), fetcher, {
     refreshInterval: range === "1D" ? interval * 5 : 0,
     keepPreviousData: true,
   });

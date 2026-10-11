@@ -1,6 +1,6 @@
 import "server-only";
 import { getBars } from "@/lib/market/service";
-import type { Bars, PricePoint, Range } from "@/lib/market/types";
+import type { PortfolioBars, PricePoint, Range } from "@/lib/market/types";
 import { createClient } from "@/lib/supabase/server";
 import { buildHistory, type LedgerEvent } from "./history";
 
@@ -31,7 +31,7 @@ export async function loadHoldings(userId: string) {
 const toUnix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 
 /** Portfolio value over a chart range, shaped like a stock's Bars. */
-export async function loadPortfolioHistory(userId: string, range: Range): Promise<Bars> {
+export async function loadPortfolioHistory(userId: string, range: Range): Promise<PortfolioBars> {
   const supabase = await createClient();
   const clock = await getBars("SPY", range);
   const timeline = clock.points.map((p) => p.time);
@@ -93,5 +93,10 @@ export async function loadPortfolioHistory(userId: string, range: Range): Promis
     }
   }
 
-  return { symbol: "PORTFOLIO", range, points, baseline: Math.round(baseline * 100) / 100 };
+  // Deposits change value but aren't returns; the client subtracts them from the change.
+  const deposits = (funding.data ?? [])
+    .map((f) => ({ time: toUnix(f.created_at), amount: Number(f.amount) }))
+    .sort((a, b) => a.time - b.time);
+
+  return { symbol: "PORTFOLIO", range, points, baseline: Math.round(baseline * 100) / 100, deposits };
 }
