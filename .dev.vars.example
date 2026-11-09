@@ -1,0 +1,2 @@
+# Copy to .dev.vars. Picks which .env files `npm run preview` loads.
+NEXTJS_ENV=development
