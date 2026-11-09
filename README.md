@@ -9,7 +9,8 @@ Paper trading with live prices. Real US stocks, real-time quotes, real charts. T
 
 ## Stack
 
-- Next.js 16 (App Router, Cache Components), TypeScript, Tailwind CSS 4
+- Next.js 16 (App Router), TypeScript, Tailwind CSS 4
+- Cloudflare Workers via [OpenNext](https://opennext.js.org/cloudflare), live at https://trading.ritvikreddy.dev
 - Supabase for auth and Postgres, with Row Level Security
 - Alpaca Market Data, free IEX feed, for quotes, bars, and the ticker list
 - TradingView Lightweight Charts
@@ -65,6 +66,49 @@ select id, email, split_part(email, '@', 1) from auth.users
 on conflict (id) do nothing;
 ```
 
+## Deploy (Cloudflare Workers)
+
+The app runs on Cloudflare Workers through the OpenNext adapter. `wrangler.jsonc` names the worker `trading-simulation` and serves it on the custom domain `trading.ritvikreddy.dev`. The `ritvikreddy.dev` zone must be on the same Cloudflare account; Wrangler creates the DNS record and certificate on the first deploy.
+
+1. Log in once:
+
+   ```bash
+   npx wrangler login
+   ```
+
+2. Store the server secrets on the worker. `NEXT_PUBLIC_*` values are baked in at build time from your local `.env`, so they don't need this step.
+
+   ```bash
+   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+   npx wrangler secret put ALPACA_KEY_ID
+   npx wrangler secret put ALPACA_SECRET_KEY
+   ```
+
+   The build also bundles values from your local `.env` files as a fallback. Worker secrets take precedence, so rotating a key only needs `wrangler secret put` and no rebuild.
+
+3. Build and deploy:
+
+   ```bash
+   npm run deploy
+   ```
+
+4. In Supabase, open **Authentication → URL Configuration**. Set the Site URL to `https://trading.ritvikreddy.dev` and add `https://trading.ritvikreddy.dev/**` to the Redirect URLs. Keep `http://localhost:3000/**` there for local work.
+
+To try the production bundle locally in the Workers runtime before deploying, copy `.dev.vars.example` to `.dev.vars` and run:
+
+```bash
+npm run preview
+```
+
+Logs: `npx wrangler tail`, or **Workers & Pages → trading-simulation → Logs** in the dashboard.
+
+**Cloudflare notes**
+
+- Cache Components is off. With it on, page renders hang on the Workers runtime ([opennextjs-cloudflare#1450](https://github.com/opennextjs/opennextjs-cloudflare/issues/1450)). Turn it back on once that issue is fixed.
+- The incremental cache uses read-only static assets, so no R2 bucket is needed. Every page is dynamic, so nothing needs ISR. If you add time-based or on-demand ISR, switch to the R2 cache in `open-next.config.ts`.
+- `proxy.ts` runs as Node.js middleware, which OpenNext supports experimentally.
+- The quote cache in `lib/market/cache.ts` is per isolate. Cloudflare runs many isolates, so Alpaca sees more calls than it would from one Node server. That's still well under the rate limit at this scale.
+
 ## Scripts
 
 | Command | What it does |
@@ -73,6 +117,9 @@ on conflict (id) do nothing;
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm test` | Unit tests for order math and portfolio history |
+| `npm run preview` | Build for Workers and run locally with Wrangler |
+| `npm run deploy` | Build for Workers and deploy to Cloudflare |
+| `npm run cf-typegen` | Generate types for Worker bindings |
 
 ## How it works
 
